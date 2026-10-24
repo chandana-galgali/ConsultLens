@@ -1,0 +1,7 @@
+SYNTHETIC DIAGNOSTICS - LABORATORY REPORT
+Date: 10/06/2026
+Patient: Sample Patient
+Hemoglobin: 10.4 g/dL
+Platelets: 210
+Fasting Blood Sugar: 86 mg/dL
+TSH: 2.8 mIU/L

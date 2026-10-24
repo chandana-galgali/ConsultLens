@@ -1,0 +1,28 @@
+# Clinic-owned schedule of EXPECTED items. Edit this file and refresh the page - no code changes.
+# ConsultLens only compares "expected by this gestational age" with "found in uploaded records".
+# It never says an item was "missed" - it may have been done elsewhere and simply not uploaded.
+version: "0.2"
+owner: "Treating clinician / clinic protocol"
+note: "PLACEHOLDER WINDOWS - must be confirmed by the treating clinician before any real use."
+expected:
+  # ---- booking investigations ----
+  - {id: booking_hb, group: "Booking tests",   label: "Hemoglobin (booking)",          kind: observation, codes: [hb],   window_weeks: [0, 12.9], match_in_window: true}
+  - {id: booking_fbs, group: "Booking tests",  label: "Fasting blood sugar (booking)", kind: observation, codes: [fbs],  window_weeks: [0, 12.9], match_in_window: true}
+  - {id: booking_tsh, group: "Booking tests",  label: "TSH (booking)",                 kind: observation, codes: [tsh],  window_weeks: [0, 12.9], match_in_window: true}
+  - {id: blood_group, group: "Booking tests",  label: "Blood group and Rh",            kind: observation, codes: [blood_group], window_weeks: [0, 12.9]}
+  - {id: hiv, group: "Booking tests",          label: "HIV screening",                 kind: observation, codes: [hiv],   window_weeks: [0, 12.9]}
+  - {id: hbsag, group: "Booking tests",        label: "HBsAg",                         kind: observation, codes: [hbsag], window_weeks: [0, 12.9]}
+  - {id: hcv, group: "Booking tests",          label: "Anti-HCV",                      kind: observation, codes: [hcv],   window_weeks: [0, 12.9]}
+  - {id: vdrl, group: "Booking tests",         label: "VDRL",                          kind: observation, codes: [vdrl],  window_weeks: [0, 12.9]}
+  # ---- first trimester screening ----
+  - {id: nt_scan, group: "NT scan and dual marker",      label: "NT scan (11 to 13+6 wks)",      kind: document, doc_types: [usg_nt], window_weeks: [11, 13.9]}
+  - {id: dual_marker, group: "NT scan and dual marker",  label: "Dual marker (11 to 13+6 wks)",  kind: document, doc_types: [marker], window_weeks: [11, 13.9]}
+  # ---- second trimester ----
+  - {id: level2_scan, group: "Level II scan",  label: "Level II scan (18 to 22 wks)",  kind: document, doc_types: [usg_level2], window_weeks: [18, 22.9]}
+  - {id: mid_hb, group: "Mid-pregnancy bloods",       label: "Hemoglobin repeat (24 to 28 wks)", kind: observation, codes: [hb], window_weeks: [24, 28.9], match_in_window: true}
+  - {id: mid_sugar, group: "Mid-pregnancy bloods",    label: "Blood sugar (24 to 28 wks)",    kind: observation, codes: [fbs, ppbs], window_weeks: [24, 28.9], match_in_window: true}
+  # ---- immunisation ----
+  - {id: tt1, group: "TT1",          label: "TT1 vaccine",                   kind: observation, codes: [tt1], window_weeks: [0, 20]}
+  - {id: tt2, group: "TT2",          label: "TT2 vaccine",                   kind: observation, codes: [tt2], window_weeks: [4, 28]}
+  # ---- third trimester ----
+  - {id: growth_scan_1, group: "Growth scan", label: "Growth scan 1 (28 to 34 wks)", kind: document, doc_types: [usg_growth], window_weeks: [28, 34]}
