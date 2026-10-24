@@ -12,7 +12,7 @@ Base.metadata.create_all(bind=engine)
 ensure_columns()
 
 app = FastAPI(title="ConsultLens API", version="0.2.0")
-app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 for r in (patients, documents, observations, briefing, demo, whatsapp, system):
     app.include_router(r.router)
 
