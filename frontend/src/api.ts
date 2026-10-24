@@ -9,7 +9,7 @@
 
 import type { PatientT, PatientCard, Briefing, EventT, Trend, GapItem, QualityFlag, Obs } from "./types";
 
-const API_BASE_URL = "https://consult-lens.vercel.app";
+const API_BASE_URL = "https://consultlens-backend.onrender.com"; 
 let BASE = import.meta.env.VITE_API_URL ?? API_BASE_URL;
 let AUTH_HEADER: Record<string, string> = {};
 
