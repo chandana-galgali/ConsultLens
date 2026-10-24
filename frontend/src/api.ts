@@ -9,7 +9,8 @@
 
 import type { PatientT, PatientCard, Briefing, EventT, Trend, GapItem, QualityFlag, Obs } from "./types";
 
-let BASE = (import.meta as Record<string, unknown> & { env: Record<string, string> }).env.VITE_API_URL ?? "https://consult-lens.vercel.app";
+const API_BASE_URL = "https://consult-lens.vercel.app";
+let BASE = import.meta.env.VITE_API_URL ?? API_BASE_URL;
 let AUTH_HEADER: Record<string, string> = {};
 
 export function configureApi(baseUrl: string, token?: string) {
