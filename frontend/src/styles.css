@@ -785,11 +785,95 @@ input, textarea, select { font-family: inherit; }
 }
 .fade-in { animation: fadeSlideIn 0.2s ease forwards; }
 
+/* ── Mobile layout ────────────────────────────────────────────────────────── */
 @media (max-width: 700px) {
-  .sidebar { display: none; }
+  /* Stack app vertically instead of sidebar + main side by side */
+  .app { flex-direction: column; height: auto; min-height: 100dvh; }
+
+  /* Sidebar becomes a top strip */
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 16px;
+    gap: 12px;
+    overflow-x: auto;
+    flex-shrink: 0;
+  }
+  .sidebar-logo { flex-shrink: 0; }
+  .sidebar-logo .wordmark { font-size: 15px; }
+  .sidebar-logo .tagline { display: none; }
+  .sidebar-search { flex: 1; min-width: 120px; }
+  .sidebar-search input { padding: 6px 10px; font-size: 12px; }
+  .sidebar-section-label { display: none; }
+  .patient-list {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    overflow-x: auto;
+    flex-shrink: 0;
+    padding: 0;
+  }
+  .patient-item {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border-bottom: none;
+    border: 1px solid var(--border);
+    min-width: 120px;
+  }
+  .patient-item.active { border-color: var(--accent); }
+  .patient-name { font-size: 12px; }
+  .patient-meta { gap: 4px; }
+  .sidebar-footer {
+    flex-direction: row;
+    gap: 8px;
+    padding: 0;
+    border-top: none;
+    flex-shrink: 0;
+  }
+  .demo-btn, .add-patient-btn { font-size: 11px; padding: 6px 10px; white-space: nowrap; }
+
+  /* Main area */
+  .main { flex: 1; min-height: 0; }
+
+  /* Topbar */
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 16px;
+    height: auto;
+  }
+  .topbar-actions { width: 100%; gap: 8px; }
+  .topbar-actions .btn { flex: 1; text-align: center; }
+
+  /* Tabs — horizontal scroll */
+  .tabs { overflow-x: auto; flex-wrap: nowrap; padding: 0 16px; gap: 0; }
+  .tab { flex-shrink: 0; padding: 10px 12px; font-size: 12px; }
+
+  /* Content */
+  .content { padding: 12px 12px 60px; }
+  .two-col { grid-template-columns: 1fr; }
   .stats-row { grid-template-columns: 1fr 1fr; }
-  .topbar { padding: 0 16px; }
-  .content { padding: 16px 16px 40px; }
+
+  /* Summary banner */
+  .summary-banner { padding: 12px; }
+
+  /* BP chart */
+  .bp-bars { overflow-x: auto; }
+
+  /* Trends table */
+  .trends-table { font-size: 12px; }
+  .trends-table th, .trends-table td { padding: 7px 8px; }
+
+  /* Upload zone */
+  .upload-zone { padding: 20px 12px; }
+
+  /* Modals full-screen on mobile */
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal { width: 100%; border-bottom-left-radius: 0; border-bottom-right-radius: 0; max-height: 90dvh; overflow-y: auto; }
 }
 
 /* ── Modal .modal (not .modal-box) ──────────────────────────────────────────── */
@@ -801,37 +885,14 @@ input, textarea, select { font-family: inherit; }
   box-shadow: var(--shadow);
   overflow: hidden;
 }
-
 .modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-/* @media (max-width: 700px) {
-  .sidebar { display: none; }
-  .stats-row { grid-template-columns: 1fr 1fr; }
-  .topbar { padding: 0 16px; }
-  .content { padding: 16px 16px 40px; }
-}
-
-/* ── Modal .modal (not .modal-box) ──────────────────────────────────────────── */
-/* .modal {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  width: min(480px, 100%);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-} */
-/* .modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
   padding: 12px 16px;
   border-top: 1px solid var(--border);
   background: var(--bg);
-} */
+}
 
 /* ── Form hint ────────────────────────────────────────────────────────────── */
 .form-hint { font-size: 10.5px; color: var(--fg-3); margin-top: 4px; }
