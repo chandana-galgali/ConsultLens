@@ -2,9 +2,14 @@
 // Base URL: VITE_API_URL env var, default localhost:8000
 // In Care plugin, call configureApi() with the Care token before any request.
 
+// import type { PatientT, PatientCard, Briefing, EventT, Trend, GapItem, QualityFlag, Obs } from "./types";
+
+// let BASE = (import.meta as Record<string, unknown> & { env: Record<string, string> }).env.VITE_API_URL ?? "http://localhost:8000";
+// let AUTH_HEADER: Record<string, string> = {};
+
 import type { PatientT, PatientCard, Briefing, EventT, Trend, GapItem, QualityFlag, Obs } from "./types";
 
-let BASE = (import.meta as Record<string, unknown> & { env: Record<string, string> }).env.VITE_API_URL ?? "http://localhost:8000";
+let BASE = (import.meta as Record<string, unknown> & { env: Record<string, string> }).env.VITE_API_URL ?? "https://consult-lens.vercel.app";
 let AUTH_HEADER: Record<string, string> = {};
 
 export function configureApi(baseUrl: string, token?: string) {
