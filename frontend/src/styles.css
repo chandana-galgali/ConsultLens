@@ -979,3 +979,122 @@ input, textarea, select { font-family: inherit; }
 .summary-source { font-size: 10px; color: var(--fg-3); margin-top: 6px; display: block; }
 .summary-banner .label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--accent); margin-bottom: 6px; }
 
+
+.staff-panel{margin-top:14px;color:#d5e9ee}.staff-panel summary{cursor:pointer;font-size:12px}.staff-panel label{display:block;font-size:11px;margin:8px 0}.staff-panel input,.staff-panel select{width:100%;padding:8px;border-radius:7px;border:1px solid #a4c6d1;background:white;color:#143e50}.staff-panel button{padding:7px;border-radius:6px;background:#d2edf0;color:#143e50;border:none;margin:5px 0}.staff-panel p{font-size:11px;color:white}
+
+.demo-disclaimer{font-size:10px;line-height:1.4;color:#ffe9b0;background:#805c152c;border:1px solid #caa3607c;border-radius:8px;padding:8px;margin-top:10px}
+
+/* ConsultLens 0.4 — consistent two-theme hospital workspace and responsive layout. */
+:root, :root[data-theme="light"] {
+  --bg:#f1f6f8; --bg-card:#ffffff; --bg-sidebar:#103d51; --bg-header:#ffffff;
+  --fg:#173647; --fg-2:#425e70; --fg-3:#5c7381;
+  --fg-inv:#ffffff; --fg-inv-2:#c8e0e9;
+  --border:#d4e2e8; --border-2:#aabfca;
+  --accent:#08798b; --accent-2:#07667a; --accent-bg:#e1f3f5;
+  --radius:10px; --radius-lg:16px; color-scheme:light;
+}
+:root[data-theme="dark"] {
+  --bg:#101923; --bg-card:#1d2b39; --bg-sidebar:#0a2331; --bg-header:#1b2a38;
+  --fg:#f0f5fa; --fg-2:#c9d8e5; --fg-3:#afc1d0;
+  --fg-inv:#ffffff; --fg-inv-2:#c8e0e9;
+  --border:#375064; --border-2:#587083;
+  --accent:#6de1e8; --accent-2:#a0ecf0; --accent-bg:#173b4b;
+  --warn:#ffd18b; --warn-bg:#3a2e22; --warn-border:#8a663b;
+  --ok:#72e8b1; --ok-bg:#15372e; --ok-border:#33765a;
+  --info:#a9caff; --info-bg:#1b314d; --info-border:#4d6d91;
+  --critical:#ffa2a2; --critical-bg:#3d252b; --critical-border:#884c58;
+  color-scheme:dark;
+}
+html,body,#root { min-height:100%; }
+body { background:var(--bg);color:var(--fg);font-family:Inter,ui-sans-serif,system-ui,"Segoe UI",sans-serif; }
+.app { height:100dvh; min-height:0; }
+.main { min-width:0; min-height:0; overflow-y:auto; overflow-x:hidden; background:var(--bg); }
+.sidebar { background:var(--bg-sidebar); }
+.sidebar-logo { position:relative; }
+.theme-toggle { display:flex;align-items:center;gap:6px;margin-top:12px;padding:6px 10px;border-radius:8px;
+  color:#fff;background:#ffffff17;border:1px solid #ffffff65;font-size:12px;font-weight:650; }
+.theme-toggle:hover,.theme-toggle:focus-visible { background:#ffffff30; }
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible {
+  outline:3px solid var(--accent);outline-offset:2px;
+}
+.workflow-section-toggle { margin:16px 24px 28px; }
+.workflow-section-toggle button { padding:11px 16px; background:var(--bg-card);color:var(--fg);border-color:var(--border-2); }
+.workflow-panel { position:relative; z-index:auto; flex:none; margin:0 24px 36px;padding:24px;
+  background:var(--bg-card);color:var(--fg);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm); }
+.workflow-panel header { margin-bottom:18px; }
+.workflow-panel h2 { color:var(--fg);font-size:20px;font-weight:750; }
+.workflow-panel h3 { color:var(--fg);font-size:16px;font-weight:700;margin-bottom:9px; }
+.workflow-panel p { color:var(--fg-2);margin:6px 0 12px; }
+.workflow-panel label { color:var(--fg);display:block;font-weight:650;margin:14px 0;font-size:13px; }
+.workflow-panel input:not([type="checkbox"]),.workflow-panel select,.workflow-panel textarea {
+  display:block;width:100%;min-width:0;margin-top:7px;padding:11px 12px;
+  color:var(--fg);background:var(--bg-card);border:1px solid var(--border-2);
+  border-radius:9px;font-size:14px;line-height:1.5; }
+.workflow-panel input::placeholder,.workflow-panel textarea::placeholder { color:var(--fg-3); opacity:1; }
+.workflow-panel textarea { resize:vertical; min-height:90px; }
+.workflow-panel button { background:#08798b;color:#fff;border:1px solid #08798b;border-radius:9px;padding:10px 15px;font-weight:700; }
+.workflow-panel button:disabled { opacity:.55;cursor:not-allowed; }
+.workflow-panel .consent { display:flex;align-items:flex-start;gap:10px;line-height:1.5; }
+.workflow-panel .consent input { width:18px;height:18px;margin-top:2px;flex:none;accent-color:#08798b; }
+.workflow-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:14px 0; }
+.workflow-card { min-width:0;padding:20px;border-radius:13px;border:1px solid var(--border);background:var(--bg-card); }
+.workflow-message { padding:12px 14px;color:var(--fg);background:var(--accent-bg);border:1px solid var(--border);border-radius:9px; }
+.workflow-panel .workflow-message { color:var(--fg); }
+.login-screen { min-height:100dvh;display:grid;place-items:center;padding:24px;background:var(--bg); }
+.login-card { width:min(460px,100%);background:var(--bg-card);color:var(--fg);padding:clamp(24px,4vw,44px);
+  border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow); }
+.login-card h1 { color:var(--fg);font-size:24px;margin:20px 0 8px; }
+.login-card p { color:var(--fg-2); }
+.login-brand { color:var(--fg);font-size:27px;font-weight:800; }
+.login-brand span { color:var(--accent); }
+.login-card label { color:var(--fg);display:block;margin:16px 0 6px;font-weight:650; }
+.login-card input { display:block;margin-top:6px;width:100%;padding:12px;color:var(--fg);background:var(--bg-card);
+  border:1px solid var(--border-2);border-radius:9px; }
+.login-card input::placeholder { color:var(--fg-3); }
+.login-card button { background:#08798b;color:#fff;border:none;border-radius:9px;padding:11px 18px;font-weight:700;margin-top:15px; }
+.ga-pill { color:var(--accent);background:var(--accent-bg);border-color:var(--accent); }
+.topbar { background:var(--bg-header); }
+.topbar-patient .pt-name { color:var(--fg); }
+.topbar-actions { flex-wrap:wrap; }
+.tabs { background:var(--bg-header); }
+.tab { color:var(--fg-2); }
+.tab.active { color:var(--accent); }
+.staff-panel input,.staff-panel select { color:#153447;background:white; }
+@media(max-width:1080px) { .workflow-grid { grid-template-columns:1fr; } .sidebar { width:245px; } }
+@media(max-width:800px) {
+  .app { flex-direction:column;height:100dvh;min-height:0; }
+  .sidebar { display:flex;flex-direction:column;align-items:stretch;gap:0;width:100%;height:auto;max-height:44dvh;
+    padding:0;overflow:visible;flex:none;border-right:0;border-bottom:1px solid #ffffff26; }
+  .sidebar-logo { flex:none;padding:12px 16px; }
+  .sidebar-logo .tagline,.sidebar-logo .demo-disclaimer { display:none; }
+  .sidebar-logo .theme-toggle { position:absolute;top:11px;right:14px;margin:0; }
+  .session-panel { margin-top:7px; }
+  .sidebar-search { padding:8px 12px; flex:none; }
+  .sidebar-section-label { display:none; }
+  .patient-list { display:flex;flex-direction:row;overflow-x:auto;overflow-y:hidden;gap:8px;padding:8px 12px;flex:none; }
+  .patient-item { flex:none;min-width:150px;max-width:230px;padding:8px 11px;border-radius:10px;border:1px solid #ffffff2b; }
+  .patient-item.active { border-color:#60ddeb; }
+  .sidebar-footer { flex:none;display:flex;flex-direction:row;padding:8px 12px;gap:8px; }
+  .sidebar-footer button { flex:1;min-width:0;white-space:normal; }
+  .main { flex:1;min-height:0;overflow-y:auto; }
+  .topbar { height:auto;padding:12px 16px;flex-wrap:wrap; }
+  .topbar-actions { width:100%; }
+  .topbar-actions .btn { flex:initial; }
+  .tabs { padding:0 12px; }
+  .content { padding:14px 12px 22px; }
+  .workflow-section-toggle { margin:12px; }
+  .workflow-panel { margin:0 12px 24px;padding:16px; }
+}
+@media(max-width:480px) {
+  .sidebar-logo .wordmark { font-size:16px; }
+  .sidebar-logo .theme-toggle { font-size:11px;padding:5px; }
+  .sidebar-logo .theme-toggle span:last-child { display:none; }
+  .sidebar { max-height:48dvh; }
+  .sidebar-search input { font-size:14px; }
+  .topbar-actions { gap:6px; }
+  .topbar-actions .btn { padding:9px; }
+  .stats-row,.two-col,.vitals-grid,.workflow-grid { grid-template-columns:1fr; }
+  .workflow-panel h2 { font-size:18px; }
+  .workflow-card { padding:14px; }
+  .modal-box { max-width:calc(100vw - 20px);max-height:calc(100dvh - 24px);overflow:auto; }
+}

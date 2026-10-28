@@ -8,7 +8,7 @@ from . import gap_checker, sections, summarizer, timeline_builder
 
 def patient_out(p: models.Patient) -> dict:
     return {
-        "id": p.id, "name": p.name, "age": p.age, "mrn": p.mrn, "external_id": p.external_id, "phone": p.phone,
+        "id": p.id, "name": p.name, "age": p.age, "mrn": p.mrn, "external_id": p.external_id, "phone": p.phone, "preferred_language": p.preferred_language, "reminder_opt_in": p.reminder_opt_in,
         "blood_group": p.blood_group, "lmp": p.lmp, "edd": p.edd, "gravida": p.gravida, "para": p.para,
         "profile": sections.parse_profile(p),
     }
@@ -45,6 +45,7 @@ def build_briefing(db, p: models.Patient, narrative: bool = False, today: date |
     result = {
         "patient": patient_out(p),
         "snapshot": snapshot,
+        "ga": timeline_builder.fmt_ga(p.lmp, today),
         "ruler": sections.build_ruler(p, docs, gaps),
         "gaps": gaps,
         "trends": trends,

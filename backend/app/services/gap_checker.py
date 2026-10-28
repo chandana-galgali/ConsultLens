@@ -17,19 +17,19 @@ def load_rules() -> dict:
     return yaml.safe_load(RULES_PATH.read_text())
 
 
-def _find(rule: dict, docs, obs):
+def _find(rule: dict, docs, obs, patient_lmp: date | None = None):
     """Returns (found, doc_id, date) for the first piece of evidence in the record."""
     lo, hi = rule["window_weeks"]
     if rule["kind"] == "document":
         for d in sorted(docs, key=lambda d: (d.doc_date is None, d.doc_date)):
-            if d.doc_type in rule["doc_types"]:
-                return True, d.id, d.doc_date
+            if d.doc_type in rule["doc_types"] and d.doc_date is not None:
+                # Only evidence dated inside the configured gestational window satisfies it.
+                if patient_lmp is not None and lo <= (d.doc_date - patient_lmp).days / 7 <= hi:
+                    return True, d.id, d.doc_date
         return False, None, None
     for o in sorted(obs, key=lambda o: (o.observed_on is None, o.observed_on)):
-        if o.code in rule["codes"]:
-            if not rule.get("match_in_window"):
-                return True, o.document_id, o.observed_on
-            if o.gestation_weeks is not None and lo <= o.gestation_weeks <= hi:
+        if o.code in rule["codes"] and o.observed_on is not None and patient_lmp is not None:
+            if lo <= (o.observed_on - patient_lmp).days / 7 <= hi:
                 return True, o.document_id, o.observed_on
     return False, None, None
 
@@ -82,7 +82,7 @@ def check_gaps(db, patient: models.Patient, today: date | None = None) -> dict:
     items = []
     for r in rules["expected"]:
         lo, hi = r["window_weeks"]
-        found, doc_id, on = _find(r, docs, obs)
+        found, doc_id, on = _find(r, docs, obs, patient.lmp)
         if found:
             status = "found"
         elif ga < lo:
@@ -92,7 +92,7 @@ def check_gaps(db, patient: models.Patient, today: date | None = None) -> dict:
         else:
             status = "not_found_window_passed"
         items.append({
-            "id": r["id"], "label": r["label"], "group": r.get("group") or r["label"], "window": f"{lo:g} to {hi:g} wks", "lo": lo, "hi": hi, "status": status,
+            "id": r["id"], "label": r["label"], "group": r.get("group") or r["label"], "window": f"{lo:g} to {hi:g} wks", "lo": lo, "hi": hi, "status": status, "review_required": True, "clinical_recommendation": False,
             "found_doc_id": doc_id, "found_on": on.isoformat() if on else None,
         })
 

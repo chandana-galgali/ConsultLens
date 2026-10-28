@@ -1,5 +1,4 @@
 import mimetypes
-import shutil
 import uuid
 from datetime import date
 from pathlib import Path
@@ -13,6 +12,7 @@ from .. import models
 from ..catalog import DOC_TYPE_LABELS
 from ..config import settings
 from ..db import get_db
+from ..security import require_roles
 from ..services.pipeline import process_document, reextract_document
 from ..services.timeline_builder import fmt_ga
 
@@ -33,7 +33,8 @@ def _summary(db, doc: models.Document) -> dict:
 
 @router.post("/patients/{pid}/documents")
 def upload(pid: int, file: UploadFile = File(...), source: str = Form("upload"),
-           doc_date: date | None = Form(None), db: Session = Depends(get_db)):
+           doc_date: date | None = Form(None), db: Session = Depends(get_db),
+           _user=Depends(require_roles("admin", "doctor", "nurse", "lab"))):
     patient = db.get(models.Patient, pid)
     if not patient:
         raise HTTPException(404, "Patient not found")
@@ -45,8 +46,17 @@ def upload(pid: int, file: UploadFile = File(...), source: str = Form("upload"),
 
     Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
     stored = Path(settings.upload_dir) / f"{uuid.uuid4().hex}{ext}"
-    with stored.open("wb") as f:
-        shutil.copyfileobj(file.file, f)
+    try:
+        with stored.open("wb") as f:
+            total = 0
+            while part := file.file.read(1024 * 1024):
+                total += len(part)
+                if total > settings.max_upload_mb * 1024 * 1024:
+                    raise HTTPException(413, "Upload exceeds configured limit")
+                f.write(part)
+    except Exception:
+        stored.unlink(missing_ok=True)
+        raise
 
     doc = models.Document(patient_id=pid, filename=file.filename, stored_path=str(stored), source=source)
     db.add(doc)
@@ -54,11 +64,11 @@ def upload(pid: int, file: UploadFile = File(...), source: str = Form("upload"),
     db.refresh(doc)
     try:
         doc = process_document(db, doc, user_date=doc_date)
-    except Exception as exc:  # most often: Tesseract / Poppler not installed
+    except Exception:  # parsing errors are not disclosed to callers
         db.delete(doc)
         db.commit()
         stored.unlink(missing_ok=True)
-        raise HTTPException(422, f"Could not read this file: {exc}")
+        raise HTTPException(422, "Could not process document; check that it is a supported, readable file")
     return _summary(db, doc)
 
 
@@ -85,7 +95,8 @@ class DocumentPatch(BaseModel):
 
 
 @router.patch("/documents/{did}")
-def patch_document(did: int, body: DocumentPatch, db: Session = Depends(get_db)):
+def patch_document(did: int, body: DocumentPatch, db: Session = Depends(get_db),
+                   _user=Depends(require_roles("admin", "doctor", "nurse", "lab"))):
     """Clinician fixes the document type or date. Values are re-extracted from the stored text (no new OCR)."""
     d = db.get(models.Document, did)
     if not d:
@@ -102,7 +113,8 @@ def patch_document(did: int, body: DocumentPatch, db: Session = Depends(get_db))
 
 
 @router.delete("/documents/{did}")
-def delete_document(did: int, db: Session = Depends(get_db)):
+def delete_document(did: int, db: Session = Depends(get_db),
+                    _user=Depends(require_roles("admin", "doctor"))):
     d = db.get(models.Document, did)
     if not d:
         raise HTTPException(404, "Document not found")

@@ -4,6 +4,11 @@ import type { PatientCard, PatientT, Briefing } from "./types";
 import BriefingView from "./components/BriefingView";
 import NewPatientForm from "./components/NewPatientForm";
 import UploadModal from "./components/UploadModal";
+import WorkflowPanel from "./components/WorkflowPanel";
+import Login from "./components/Login";
+import StaffPanel from "./components/StaffPanel";
+import {setSession,type Staff} from "./workflowApi";
+import { ThemeToggle } from "./components/ThemeToggle";
 
 // ── Util ─────────────────────────────────────────────────────────────────────
 function fmtDate(iso: string | null): string {
@@ -14,16 +19,18 @@ function fmtDate(iso: string | null): string {
 }
 
 function riskLabel(briefing: Briefing | null): { label: string; cls: string } {
-  if (!briefing) return { label: "Routine", cls: "risk-normal" };
+  if (!briefing) return { label: "No flags", cls: "risk-normal" };
   const hasCritical = briefing.gaps.some((g) => g.status === "not_found") ||
     briefing.quality_flags.some((f) => f.kind === "conflict");
   return hasCritical
-    ? { label: "⚑ Attention", cls: "risk-high" }
-    : { label: "Routine", cls: "risk-normal" };
+    ? { label: "⚑ Review records", cls: "risk-high" }
+    : { label: "No flags", cls: "risk-normal" };
 }
 
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
+  const [user,setUser] = useState<Staff|null>(null);
+  const [showWorkflow, setShowWorkflow] = useState(false);
   const [patients, setPatients] = useState<PatientCard[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [briefing, setBriefing] = useState<Briefing | null>(null);
@@ -44,10 +51,12 @@ export default function App() {
     }
   }, []);
 
-  useEffect(() => { loadPatients(); }, [loadPatients]);
+  useEffect(() => { if (user) loadPatients(); }, [loadPatients, user]);
 
   const selectPatient = useCallback(async (id: number) => {
     setSelectedId(id);
+    setShowWorkflow(false);
+    setBriefing(null);
     if (briefingCache[id]) {
       setBriefing(briefingCache[id]);
       return;
@@ -60,6 +69,7 @@ export default function App() {
       setBriefingCache((c) => ({ ...c, [id]: b }));
     } catch (e) {
       setError(String(e));
+      setBriefing(null);
     } finally {
       setLoading(false);
     }
@@ -89,23 +99,41 @@ export default function App() {
   const refreshBriefing = async () => {
     if (!selectedId) return;
     setBriefingCache((c) => { const n = { ...c }; delete n[selectedId]; return n; });
-    selectPatient(selectedId);
+    setLoading(true);
+    try {
+      const b = await getBriefing(selectedId);
+      setBriefing(b);
+      setBriefingCache(c => ({...c, [selectedId]: b}));
+      setError(null);
+    } catch (e) { setError(String(e)); }
+    finally { setLoading(false); }
   };
 
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const gaLabel = (p: PatientCard, b: Briefing | null) =>
-    b?.ga_label ?? (p.ga ? `GA ${p.ga}` : "GA —");
+  const gaLabel = (p: PatientCard, b: Briefing | null) => {
+    if (b?.ga_label && b.ga_label !== "GA —") return b.ga_label;
+    if (p.ga) return `GA ${p.ga}`;
+    if (!p.lmp) return "GA unavailable";
+    const lmpTime = Date.parse(`${p.lmp}T00:00:00Z`);
+    const days = Math.floor((Date.now() - lmpTime) / 86400000);
+    return Number.isFinite(days) && days >= 0
+      ? `GA ${Math.floor(days / 7)}+${days % 7}` : "GA unavailable";
+  };
 
+  if (!user) return <Login onLogin={setUser}/>;
   return (
     <div className="app">
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
       <aside className="sidebar">
         <div className="sidebar-logo">
           <div className="wordmark">Consult<span>Lens</span></div>
-          <div className="tagline">Pre-consultation Briefing · Antenatal</div>
+          <ThemeToggle />
+          <div className="tagline">Evidence-led consultation readiness</div><div className="demo-disclaimer">Synthetic data only · Checklist windows are not clinically approved</div>
+          {user.role === "admin" && <StaffPanel/>}
+          <div className="session-panel"><span>{user.email} · {user.role}</span><button onClick={()=>{setSession("");setUser(null);setBriefing(null);setPatients([]);setSelectedId(null);setBriefingCache({});}}>Sign out</button></div>
         </div>
         <div className="sidebar-search">
           <input
@@ -169,14 +197,20 @@ export default function App() {
             </div>
           </div>
         )}
-        {!loading && briefing && (
+        {!loading && briefing && (<>
           <BriefingView
             briefing={briefing}
             onUpload={() => setShowUpload(true)}
             onRefresh={refreshBriefing}
             fmtDate={fmtDate}
           />
-        )}
+          <div className="workflow-section-toggle">
+            <button type="button" className="btn btn-outline" aria-expanded={showWorkflow} onClick={() => setShowWorkflow(v => !v)}>
+              {showWorkflow ? "Hide" : "Open"} VoiceBridge & care coordination {showWorkflow ? "−" : "+"}
+            </button>
+          </div>
+          {showWorkflow && <WorkflowPanel key={briefing.patient.id} patientId={briefing.patient.id} user={user}/>}
+        </>)}
       </main>
 
       {/* ── Modals ──────────────────────────────────────────────────────── */}

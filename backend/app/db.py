@@ -23,7 +23,7 @@ def get_db():
 # Columns added after v1. create_all() never alters existing tables, so we add them here.
 # This keeps an older consultlens.db working without deleting it.
 _NEW_COLUMNS = {
-    "patients": {"profile": "TEXT"},
+    "patients": {"profile": "TEXT", "preferred_language": "VARCHAR(16) DEFAULT 'en'", "reminder_opt_in": "INTEGER DEFAULT 0"},
     "documents": {"ocr_confidence": "FLOAT"},
     "observations": {"verified": "INTEGER DEFAULT 0", "edited": "INTEGER DEFAULT 0"},
 }

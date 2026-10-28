@@ -13,3 +13,4 @@ boto3
 httpx
 psycopg[binary]
 pytest
+PyJWT>=2.8,<3

@@ -7,6 +7,8 @@ export interface PatientT {
   lmp: string | null;           // ISO date
   edd: string | null;           // ISO date
   phone: string | null;
+  preferred_language?: "en" | "hi" | "mr";
+  reminder_opt_in?: boolean;
   blood_group: string | null;
   mrn: string | null;
   external_id: string | null;
@@ -56,6 +58,7 @@ export interface TrendPoint {
   value: number;
   ga: string | null;
   ga_weeks: number | null;
+  gestation_weeks: number | null;
   doc_id: number;
   obs_id: number;
   dia?: number;        // for BP combined trend

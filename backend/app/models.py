@@ -14,6 +14,8 @@ class Patient(Base):
     mrn: Mapped[str | None] = mapped_column(String(64))
     name: Mapped[str] = mapped_column(String(200))
     phone: Mapped[str | None] = mapped_column(String(32), index=True)  # used to match WhatsApp senders
+    preferred_language: Mapped[str] = mapped_column(String(16), default="en")
+    reminder_opt_in: Mapped[bool] = mapped_column(default=False)
     age: Mapped[int | None] = mapped_column(Integer)
     blood_group: Mapped[str | None] = mapped_column(String(8))
     lmp: Mapped[date | None] = mapped_column(Date)
@@ -63,3 +65,44 @@ class Observation(Base):
     edited: Mapped[int] = mapped_column(Integer, default=0)    # clinician corrected the extracted value
 
     patient: Mapped[Patient] = relationship(back_populates="observations")
+
+
+class StaffUser(Base):
+    __tablename__ = "staff_users"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(Text)
+    role: Mapped[str] = mapped_column(String(24))
+    active: Mapped[bool] = mapped_column(default=True)
+
+
+class ClinicalNote(Base):
+    __tablename__ = "clinical_notes"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    patient_id: Mapped[int] = mapped_column(ForeignKey("patients.id"), index=True)
+    author_id: Mapped[int] = mapped_column(ForeignKey("staff_users.id"))
+    language: Mapped[str] = mapped_column(String(16))
+    transcript: Mapped[str] = mapped_column(Text)
+    reviewed_text: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class Reminder(Base):
+    __tablename__ = "reminders"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    patient_id: Mapped[int] = mapped_column(ForeignKey("patients.id"), index=True)
+    author_id: Mapped[int] = mapped_column(ForeignKey("staff_users.id"))
+    scheduled_for: Mapped[datetime] = mapped_column(DateTime)
+    language: Mapped[str] = mapped_column(String(16))
+    body: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(24), default="queued_mock")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class AuditEntry(Base):
+    __tablename__ = "audit_entries"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    actor_id: Mapped[int] = mapped_column(ForeignKey("staff_users.id"))
+    action: Mapped[str] = mapped_column(String(80))
+    patient_id: Mapped[int | None] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

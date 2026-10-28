@@ -9,13 +9,13 @@
 
 import type { PatientT, PatientCard, Briefing, EventT, Trend, GapItem, QualityFlag, Obs } from "./types";
 
-const API_BASE_URL = "https://consultlens-backend.onrender.com"; 
+const API_BASE_URL = ""; 
 let BASE = import.meta.env.VITE_API_URL ?? API_BASE_URL;
 let AUTH_HEADER: Record<string, string> = {};
 
 export function configureApi(baseUrl: string, token?: string) {
   BASE = baseUrl.replace(/\/$/, "");
-  if (token) AUTH_HEADER = { Authorization: `Bearer ${token}` };
+  AUTH_HEADER = token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 async function get<T>(path: string): Promise<T> {
@@ -53,6 +53,8 @@ export const createPatient = (data: Partial<PatientT>) =>
     age: data.age,
     lmp: data.lmp,
     phone: data.phone,
+    preferred_language: data.preferred_language ?? "en",
+    reminder_opt_in: data.reminder_opt_in ?? false,
   });
 
 export const updatePatient = (id: number, data: Partial<PatientT>) =>
@@ -78,17 +80,17 @@ function mapGapItem(raw: Record<string, unknown>): GapItem {
   if (rawStatus === "found") status = "found";
   else if (rawStatus === "due_now" || rawStatus === "window_open") status = "window_open";
   else if (rawStatus === "no_lmp") status = "no_lmp";
-  else if (rawStatus === "future") status = "future";
+  else if (rawStatus === "future" || rawStatus === "upcoming") status = "future";
   else if (rawStatus.includes("not_found")) status = "not_found";
 
-  const win = raw.window as Record<string, number> | null;
+  const win = raw.window as Record<string, number> | string | null;
   return {
     id: String(raw.id ?? raw.code ?? ""),
     label: String(raw.label ?? ""),
     status,
     found_on: raw.found_on ? String(raw.found_on) : null,
     found_ga_weeks: raw.found_ga ? gaStringToWeeks(String(raw.found_ga)) : null,
-    window_weeks: win ? [win.start ?? 0, win.end ?? 0] : null,
+    window_weeks: win && typeof win === "object" ? [win.start ?? 0, win.end ?? 0] : null,
   };
 }
 
@@ -142,8 +144,8 @@ function mapTrends(rawTrends: unknown[]): Trend[] {
       latest: latest as Trend["latest"],
       prev: prev as Trend["prev"],
       change: t.delta != null ? Number(t.delta) : null,
-      history: history as Trend["history"],
-      points: history as Trend["points"],
+      history: history as unknown as Trend["history"],
+      points: history as unknown as Trend["points"],
     };
   });
 }
@@ -160,7 +162,7 @@ function mapBriefing(raw: Record<string, unknown>): Briefing {
   const qualityFlags: QualityFlag[] = ((gapData.quality ?? []) as unknown[]).map((f) => {
     const ff = f as Record<string, unknown>;
     return {
-      kind: String(ff.kind ?? "no_date") as QualityFlag["kind"],
+      kind: String(ff.type ?? ff.kind ?? "no_date") as QualityFlag["kind"],
       message: String(ff.message ?? ""),
       doc_id: ff.doc_id != null ? Number(ff.doc_id) : null,
     };
@@ -181,7 +183,18 @@ function mapBriefing(raw: Record<string, unknown>): Briefing {
     ? ((narrative?.source as string) ?? "AI-assisted summary")
     : summaryText ? "AI-assisted summary" : "No records yet";
 
-  const gaStr = (snap.ga as string) ?? null;
+  // The backend snapshot has no `ga` field. Prefer the explicit API value,
+  // then calculate from the recorded LMP as a compatibility fallback.
+  const rawGa = raw.ga as string | null | undefined;
+  const lmpText = typeof pt.lmp === "string" ? pt.lmp : null;
+  const lmpDay = lmpText ? Date.parse(`${lmpText}T00:00:00Z`) : NaN;
+  const elapsedDays = Number.isFinite(lmpDay)
+    ? Math.floor((Date.now() - lmpDay) / 86400000)
+    : null;
+  const fallbackGa = elapsedDays !== null && elapsedDays >= 0
+    ? `${Math.floor(elapsedDays / 7)}+${elapsedDays % 7}` : null;
+  const gaStr = typeof rawGa === "string" && /^\d+\+[0-6]$/.test(rawGa)
+    ? rawGa : fallbackGa;
 
   return {
     patient: {
@@ -199,7 +212,7 @@ function mapBriefing(raw: Record<string, unknown>): Briefing {
       profile: (pt.profile as Record<string, unknown>) ?? null,
     },
     ga_weeks: gaStringToWeeks(gaStr),
-    ga_label: gaStr ? `GA ${gaStr}` : "GA —",
+    ga_label: gaStr ? `GA ${gaStr}` : "GA unavailable",
     edd: pt.edd ? String(pt.edd) : null,
     summary: summaryText,
     summary_source: summarySource,

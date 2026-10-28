@@ -8,3 +8,10 @@ node_modules/
 dist/
 .pytest_cache/
 .DS_Store
+
+backend/.env
+backend/consultlens.db
+backend/uploads/
+*.db
+node_modules/
+frontend/dist/

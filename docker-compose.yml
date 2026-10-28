@@ -1,20 +1,19 @@
-# Optional: run the API + PostgreSQL (your submitted stack) with one command:  docker compose up --build
-# The React frontend still runs with `npm run dev` (see START_HERE.md).
+# Local demo only. Supply POSTGRES_PASSWORD and JWT_SECRET using environment variables.
 services:
   db:
     image: postgres:16
     environment:
       POSTGRES_USER: cl
-      POSTGRES_PASSWORD: cl
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
       POSTGRES_DB: consultlens
     volumes: [pgdata:/var/lib/postgresql/data]
   api:
     build: ./backend
     environment:
-      DATABASE_URL: postgresql+psycopg://cl:cl@db:5432/consultlens
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      DATABASE_URL: postgresql+psycopg://cl:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/consultlens
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
       CORS_ORIGINS: '["http://localhost:5173","http://127.0.0.1:5173"]'
-    ports: ["8000:8000"]
+    ports: ["127.0.0.1:8000:8000"]
     depends_on: [db]
     volumes: [uploads:/app/uploads]
 volumes:

@@ -6,6 +6,8 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      "/auth": "http://localhost:8000",
+      "/workflow": "http://localhost:8000",
       "/patients": "http://localhost:8000",
       "/documents": "http://localhost:8000",
       "/integrations": "http://localhost:8000",
