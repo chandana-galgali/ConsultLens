@@ -180,8 +180,8 @@ function mapBriefing(raw: Record<string, unknown>): Briefing {
     ? narrative
     : (narrative?.text as string) ?? (snap.summary as string) ?? "";
   const summarySource = typeof narrative === "object" && narrative
-    ? ((narrative?.source as string) ?? "AI-assisted summary")
-    : summaryText ? "AI-assisted summary" : "No records yet";
+    ? ((narrative?.engine as string) ?? "structured summary")
+    : summaryText ? "structured summary" : "No briefing available";
 
   // The backend snapshot has no `ga` field. Prefer the explicit API value,
   // then calculate from the recorded LMP as a compatibility fallback.
@@ -226,12 +226,12 @@ function mapBriefing(raw: Record<string, unknown>): Briefing {
 
 // ── Briefing endpoints ─────────────────────────────────────────────────────────
 export async function getBriefing(patientId: number): Promise<Briefing> {
-  const raw = await get<Record<string, unknown>>(`/patients/${patientId}/briefing`);
+  const raw = await get<Record<string, unknown>>(`/patients/${patientId}/briefing?narrative=true`);
   return mapBriefing(raw);
 }
 
 export async function getBriefingByExternal(extId: string): Promise<Briefing> {
-  const raw = await get<Record<string, unknown>>(`/integrations/external/${extId}/briefing`);
+  const raw = await get<Record<string, unknown>>(`/integrations/external/${extId}/briefing?narrative=true`);
   return mapBriefing(raw);
 }
 

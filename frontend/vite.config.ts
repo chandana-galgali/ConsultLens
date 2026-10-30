@@ -8,6 +8,7 @@ export default defineConfig({
     proxy: {
       "/auth": "http://localhost:8000",
       "/workflow": "http://localhost:8000",
+      "/reviews": "http://localhost:8000",
       "/patients": "http://localhost:8000",
       "/documents": "http://localhost:8000",
       "/integrations": "http://localhost:8000",

@@ -3,6 +3,9 @@ import type { Briefing } from "../types";
 import GapPanel from "./GapPanel";
 import TrendTable from "./TrendTable";
 import Timeline from "./Timeline";
+import WorkflowPanel from "./WorkflowPanel";
+import EvidenceReviewPanel from "./EvidenceReviewPanel";
+import type { Staff } from "../workflowApi";
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 const TABS = [
@@ -13,6 +16,8 @@ const TABS = [
   { id: "immuno",          label: "Immunisation & Rx" },
   { id: "journey",         label: "Patient Journey" },
   { id: "documents",       label: "Documents" },
+  { id: "review",          label: "Evidence review" },
+  { id: "care",            label: "Care workspace" },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -51,12 +56,13 @@ function docTypeIcon(t: string | null): { icon: string; cls: string } {
 // ── BriefingView ─────────────────────────────────────────────────────────────
 interface Props {
   briefing: Briefing;
+  user: Staff;
   onUpload: () => void;
   onRefresh: () => void;
   fmtDate: (iso: string | null) => string;
 }
 
-export default function BriefingView({ briefing, onUpload, onRefresh, fmtDate }: Props) {
+export default function BriefingView({ briefing, user, onUpload, onRefresh, fmtDate }: Props) {
   const [activeTab, setActiveTab] = useState("overview");
   const { patient: pt, ga_label, edd, summary, summary_source,
           events, trends, gaps, quality_flags, document_count } = briefing;
@@ -148,9 +154,9 @@ export default function BriefingView({ briefing, onUpload, onRefresh, fmtDate }:
       </div>
 
       {/* ── Tabs ────────────────────────────────────────────────────────── */}
-      <div className="tabs">
+      <div className="tabs" role="tablist" aria-label="Patient sections">
         {TABS.map((tab) => (
-          <div
+          <button type="button" role="tab" aria-selected={activeTab === tab.id}
             key={tab.id}
             className={`tab${activeTab === tab.id ? " active" : ""}`}
             onClick={() => setActiveTab(tab.id)}
@@ -159,20 +165,28 @@ export default function BriefingView({ briefing, onUpload, onRefresh, fmtDate }:
             {tab.id === "overview" && attentionCount > 0 && (
               <span className="tab-badge">{attentionCount}</span>
             )}
-          </div>
+          </button>
         ))}
       </div>
 
       {/* ── Content ─────────────────────────────────────────────────────── */}
       <div className="content fade-in">
+        {activeTab === "care" && <WorkflowPanel patientId={pt.id} user={user} />}
+        {activeTab === "review" && <EvidenceReviewPanel patientId={pt.id} user={user} onUpdated={onRefresh} />}
 
         {/* OVERVIEW ──────────────────────────────────────────────────────── */}
         {activeTab === "overview" && (
           <>
             <div className="summary-banner">
-              <div className="label">Pre-consultation Summary</div>
-              <p>{summary || "No summary available yet. Upload records to generate a summary."}</p>
-              {summary_source && <span className="summary-source">{summary_source}</span>}
+              <div className="label">Pre-consultation briefing · draft for clinician review</div>
+              <p>{summary || "No extractable facts yet. Open Documents to review the uploaded sources."}</p>
+              {summary_source && <span className="summary-source">Generated using: {summary_source}. Verify against original documents.</span>}
+              <div className="summary-actions">
+                <button type="button" className="btn btn-outline" onClick={() => setActiveTab("review")}>Review evidence & decisions</button>
+                <button type="button" className="btn btn-outline" onClick={() => setActiveTab("documents")}>Source documents</button>
+                <button type="button" className="btn btn-outline" onClick={() => setActiveTab("care")}>Open clinician workspace</button>
+                <button type="button" className="btn btn-outline" onClick={onUpload}>Add a record</button>
+              </div>
             </div>
 
             <div className="stats-row">

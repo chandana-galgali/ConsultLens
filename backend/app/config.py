@@ -20,10 +20,14 @@ class Settings(BaseSettings):
     # OCR
     tesseract_cmd: str | None = None      # e.g. C:\Program Files\Tesseract-OCR\tesseract.exe (auto-detected if left empty)
     poppler_path: str | None = None       # Windows only, folder containing pdftoppm.exe (needed for scanned PDFs)
+    s3_bucket: str | None = None
+    s3_endpoint_url: str | None = None
     use_textract: bool = False
     aws_region: str = "ap-south-1"
 
     # Optional: Claude wording of the summary (never interprets)
+    openai_api_key: str | None = None
+    audio_transcription_model: str = "gpt-4o-mini-transcribe"
     anthropic_api_key: str | None = None
     claude_model: str = "claude-sonnet-5-5"
 

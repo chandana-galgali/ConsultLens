@@ -99,6 +99,22 @@ class Reminder(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class EvidenceReview(Base):
+    """Latest adjudication for an extracted fact or documentation checklist entry."""
+    __tablename__ = "evidence_reviews"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    patient_id: Mapped[int] = mapped_column(ForeignKey("patients.id"), index=True)
+    target_type: Mapped[str] = mapped_column(String(20))  # observation | checklist
+    target_id: Mapped[str] = mapped_column(String(100))
+    decision: Mapped[str] = mapped_column(String(32))  # verified | corrected | unavailable | clarification | reviewed
+    reason: Mapped[str] = mapped_column(Text)
+    reviewer_id: Mapped[int] = mapped_column(ForeignKey("staff_users.id"))
+    document_id: Mapped[int | None] = mapped_column(ForeignKey("documents.id"))
+    before_json: Mapped[str | None] = mapped_column(Text)
+    after_json: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class AuditEntry(Base):
     __tablename__ = "audit_entries"
     id: Mapped[int] = mapped_column(primary_key=True)

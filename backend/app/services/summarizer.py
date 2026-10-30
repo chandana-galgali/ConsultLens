@@ -22,20 +22,27 @@ BANNED = re.compile(
 
 
 def _fmt(pt: dict) -> str:
-    return pt.get("display") or f"{pt['value']:g}"
+    if pt.get("display"):
+        return str(pt["display"])
+    value = pt.get("value")
+    return f"{value:g}" if isinstance(value, (float, int)) else str(value or "unavailable")
 
 
 def _fallback(b: dict) -> str:
     p, snap = b["patient"], b.get("snapshot", {})
-    parts = [f"{p['name']}, gestational age {b['gaps'].get('ga') or 'unknown'}, {len(b['events'])} documents on file."]
+    parts = [f"{p['name']}: gestational age {b['gaps'].get('ga') or 'unavailable'}; {len(b.get('events', []))} dated record events available."]
     if snap.get("last_visit"):
         parts.append(f"Last visit note is dated {snap['last_visit']}.")
-    for t in b["trends"][:6]:
+    for t in b.get("trends", [])[:6]:
+        latest = t.get("latest")
+        if not latest:
+            continue
+        previous = t.get("previous") or t.get("prev")
         unit = f" {t['unit']}" if t.get("unit") else ""
-        if t["previous"]:
-            parts.append(f"{t['label']}: {_fmt(t['previous'])} ({t['previous']['date']}) then {_fmt(t['latest'])}{unit} ({t['latest']['date']}).")
+        if previous:
+            parts.append(f"{t['label']}: {_fmt(previous)} ({previous.get('date', 'undated')}) then {_fmt(latest)}{unit} ({latest.get('date', 'undated')}).")
         else:
-            parts.append(f"{t['label']}: {_fmt(t['latest'])}{unit} ({t['latest']['date']}), single reading.")
+            parts.append(f"{t['label']}: {_fmt(latest)}{unit} ({latest.get('date', 'undated')}), one recorded observation.")
     pending = [i["label"] for i in b["gaps"]["items"] if i["status"] in ("due_now", "not_found_window_passed")]
     if pending:
         parts.append("Not found in uploaded records: " + "; ".join(pending) + ".")

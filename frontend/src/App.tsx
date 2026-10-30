@@ -4,7 +4,6 @@ import type { PatientCard, PatientT, Briefing } from "./types";
 import BriefingView from "./components/BriefingView";
 import NewPatientForm from "./components/NewPatientForm";
 import UploadModal from "./components/UploadModal";
-import WorkflowPanel from "./components/WorkflowPanel";
 import Login from "./components/Login";
 import StaffPanel from "./components/StaffPanel";
 import {setSession,type Staff} from "./workflowApi";
@@ -18,19 +17,19 @@ function fmtDate(iso: string | null): string {
   return `${d} ${months[parseInt(m) - 1]} ${y}`;
 }
 
-function riskLabel(briefing: Briefing | null): { label: string; cls: string } {
-  if (!briefing) return { label: "No flags", cls: "risk-normal" };
-  const hasCritical = briefing.gaps.some((g) => g.status === "not_found") ||
-    briefing.quality_flags.some((f) => f.kind === "conflict");
-  return hasCritical
-    ? { label: "⚑ Review records", cls: "risk-high" }
-    : { label: "No flags", cls: "risk-normal" };
+function statusLabel(patient: PatientCard): { label: string; cls: string } {
+  const missing = patient.not_found ?? 0;
+  const due = patient.window_open ?? 0;
+  const issues = patient.quality_flags ?? 0;
+  const total = missing + due + issues;
+  if (total > 0) return { label: `${total} items to review`, cls: "risk-high" };
+  if ((patient.documents ?? 0) === 0) return { label: "No documents", cls: "risk-neutral" };
+  return { label: "No checklist alerts", cls: "risk-normal" };
 }
 
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
   const [user,setUser] = useState<Staff|null>(null);
-  const [showWorkflow, setShowWorkflow] = useState(false);
   const [patients, setPatients] = useState<PatientCard[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [briefing, setBriefing] = useState<Briefing | null>(null);
@@ -55,7 +54,7 @@ export default function App() {
 
   const selectPatient = useCallback(async (id: number) => {
     setSelectedId(id);
-    setShowWorkflow(false);
+    setError(null);
     setBriefing(null);
     if (briefingCache[id]) {
       setBriefing(briefingCache[id]);
@@ -99,14 +98,15 @@ export default function App() {
   const refreshBriefing = async () => {
     if (!selectedId) return;
     setBriefingCache((c) => { const n = { ...c }; delete n[selectedId]; return n; });
-    setLoading(true);
+    // Refresh data without unmounting active review or care workspace tab.
     try {
       const b = await getBriefing(selectedId);
       setBriefing(b);
       setBriefingCache(c => ({...c, [selectedId]: b}));
+      await loadPatients();
       setError(null);
     } catch (e) { setError(String(e)); }
-    finally { setLoading(false); }
+
   };
 
   const filteredPatients = patients.filter((p) =>
@@ -129,8 +129,7 @@ export default function App() {
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <div className="wordmark">Consult<span>Lens</span></div>
-          <ThemeToggle />
+          <div className="brand-row"><div className="wordmark">Consult<span>Lens</span></div><ThemeToggle /></div>
           <div className="tagline">Evidence-led consultation readiness</div><div className="demo-disclaimer">Synthetic data only · Checklist windows are not clinically approved</div>
           {user.role === "admin" && <StaffPanel/>}
           <div className="session-panel"><span>{user.email} · {user.role}</span><button onClick={()=>{setSession("");setUser(null);setBriefing(null);setPatients([]);setSelectedId(null);setBriefingCache({});}}>Sign out</button></div>
@@ -152,12 +151,14 @@ export default function App() {
           )}
           {filteredPatients.map((p) => {
             const b = briefingCache[p.id] ?? null;
-            const risk = riskLabel(b);
+            const risk = statusLabel(p);
             return (
               <div
                 key={p.id}
                 className={`patient-item${selectedId === p.id ? " active" : ""}`}
-                onClick={() => selectPatient(p.id)}
+                role="button" tabIndex={0} aria-current={selectedId === p.id ? "true" : undefined}
+                onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); void selectPatient(p.id); } }}
+                onClick={() => void selectPatient(p.id)}
               >
                 <div className="patient-name">{p.name}</div>
                 <div className="patient-meta">
@@ -199,17 +200,13 @@ export default function App() {
         )}
         {!loading && briefing && (<>
           <BriefingView
+            key={briefing.patient.id}
             briefing={briefing}
+            user={user}
             onUpload={() => setShowUpload(true)}
             onRefresh={refreshBriefing}
             fmtDate={fmtDate}
           />
-          <div className="workflow-section-toggle">
-            <button type="button" className="btn btn-outline" aria-expanded={showWorkflow} onClick={() => setShowWorkflow(v => !v)}>
-              {showWorkflow ? "Hide" : "Open"} VoiceBridge & care coordination {showWorkflow ? "−" : "+"}
-            </button>
-          </div>
-          {showWorkflow && <WorkflowPanel key={briefing.patient.id} patientId={briefing.patient.id} user={user}/>}
         </>)}
       </main>
 

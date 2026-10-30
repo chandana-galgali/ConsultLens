@@ -1098,3 +1098,48 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .workflow-card { padding:14px; }
   .modal-box { max-width:calc(100vw - 20px);max-height:calc(100dvh - 24px);overflow:auto; }
 }
+
+/* ConsultLens v0.5 — UI consistency and accessible workflow navigation */
+.brand-row { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.brand-row .theme-toggle { margin:0; flex:none; height:36px; width:36px; padding:0; display:grid; place-items:center; border-radius:50%; background:rgba(255,255,255,.12); color:#fff; }
+.brand-row .theme-toggle:hover { background:rgba(255,255,255,.25); }
+.sr-only { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
+.session-panel { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.session-panel span { color:#e2f4fb!important; overflow-wrap:anywhere; flex:1 1 170px; font-size:12px; }
+.session-panel button { border:1px solid rgba(255,255,255,.4); border-radius:8px; padding:7px 10px; background:rgba(255,255,255,.10); color:#fff; font-weight:650; }
+.session-panel button:hover { background:rgba(255,255,255,.2); }
+.risk-neutral { color:#d5e6ed; background:rgba(255,255,255,.10); }
+.patient-item { cursor:pointer; }
+.patient-item:focus-visible { outline:2px solid #67e8f9; outline-offset:-2px; }
+.summary-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:16px; }
+.summary-actions .btn { border:1px solid var(--border-2); color:var(--fg); background:var(--bg-card); font-weight:600; padding:9px 13px; }
+.summary-actions .btn:hover { border-color:var(--accent); color:var(--accent); }
+.tabs .tab { flex:none; border-top:0; border-left:0; border-right:0; border-radius:0; background:transparent; font:inherit; font-weight:600; white-space:nowrap; }
+.tabs .tab:focus-visible { outline-offset:-4px; }
+.content .workflow-panel { margin:0; padding:clamp(16px,2vw,28px); border:1px solid var(--border); box-shadow:none; }
+.content .workflow-panel .workflow-card { background:var(--bg); }
+.summary-banner p { overflow-wrap:anywhere; }
+@media(max-width:800px) {
+  .sidebar-logo .brand-row .theme-toggle { position:static; margin:0; }
+  .sidebar .session-panel { margin-top:7px; }
+  .sidebar { max-height:52dvh; }
+  .content .workflow-panel { margin:0; }
+}
+
+/* Evidence review — shared theme variables, never fixed-position overlays */
+.review-panel{width:100%;max-width:1400px;margin:0 auto;color:var(--fg);padding:clamp(12px,2vw,28px);box-sizing:border-box}
+.review-panel h2{font-size:1.5rem;margin:0 0 8px}.review-panel h3{font-size:1.12rem;margin:24px 0 12px}
+.review-heading{display:flex;gap:18px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.review-heading p,.review-muted,.review-empty{color:var(--fg-2);line-height:1.5}
+.review-statline{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}
+.review-statline span,.review-state{padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:.84rem}
+.review-disclaimer{border-left:3px solid #11a4b3;padding:10px 14px;line-height:1.55;color:var(--fg-2)}
+.review-list{display:grid;gap:12px}.review-item,.review-history,.review-editor{border:1px solid var(--border);border-radius:12px;padding:18px;background:var(--bg-card);color:inherit}
+.review-item{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.review-item-main{display:grid;gap:8px;min-width:0;flex:1}.review-value{font-weight:650;font-size:1.14rem}
+.review-snippet{border-left:3px solid #21a4b7;margin:4px 0;padding:8px 12px;line-height:1.5;overflow-wrap:anywhere}
+.review-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.review-editor{display:grid;gap:12px;border-color:#16a4ba}.review-editor label{display:grid;gap:7px;font-weight:600}
+.review-editor input,.review-editor select,.review-editor textarea{width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:inherit;font:inherit}
+.review-error{color:#fb8a8a}.review-history p{margin:8px 0;overflow-wrap:anywhere}
+@media(max-width:760px){.review-item{align-items:stretch}.review-actions{width:100%}.review-actions button{flex:1}.review-panel{padding:12px}.review-heading button{width:100%}}

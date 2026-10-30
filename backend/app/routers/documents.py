@@ -4,7 +4,7 @@ from datetime import date
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -14,6 +14,7 @@ from ..config import settings
 from ..db import get_db
 from ..security import require_roles
 from ..services.pipeline import process_document, reextract_document
+from ..services.storage import store_processed_file, is_remote, get_remote_file, delete_file
 from ..services.timeline_builder import fmt_ga
 
 router = APIRouter(tags=["documents"])
@@ -69,6 +70,18 @@ def upload(pid: int, file: UploadFile = File(...), source: str = Form("upload"),
         db.commit()
         stored.unlink(missing_ok=True)
         raise HTTPException(422, "Could not process document; check that it is a supported, readable file")
+    if settings.s3_bucket:
+        try:
+            durable_path = store_processed_file(str(stored))
+            doc.stored_path = durable_path
+            db.commit()
+            stored.unlink(missing_ok=True)
+        except Exception:
+            db.query(models.Observation).filter_by(document_id=doc.id).delete()
+            db.delete(doc)
+            db.commit()
+            stored.unlink(missing_ok=True)
+            raise HTTPException(503, "Persistent document storage unavailable; upload was not saved")
     return _summary(db, doc)
 
 
@@ -78,6 +91,21 @@ def get_file(did: int, db: Session = Depends(get_db)):
     if not d:
         raise HTTPException(404, "Document not found")
     media = mimetypes.guess_type(d.filename or "")[0] or "application/octet-stream"
+    if is_remote(d.stored_path):
+        try:
+            stream = get_remote_file(d.stored_path)
+        except Exception:
+            raise HTTPException(503, "Document storage currently unavailable") from None
+        def chunks():
+            try:
+                while chunk := stream.read(65536):
+                    yield chunk
+            finally:
+                stream.close()
+        return StreamingResponse(chunks(), media_type=media,
+                                 headers={"Content-Disposition": "inline"})
+    if not Path(d.stored_path).is_file():
+        raise HTTPException(404, "Original file unavailable on this server")
     return FileResponse(d.stored_path, media_type=media, filename=d.filename, content_disposition_type="inline")
 
 
@@ -118,9 +146,16 @@ def delete_document(did: int, db: Session = Depends(get_db),
     d = db.get(models.Document, did)
     if not d:
         raise HTTPException(404, "Document not found")
+    # Keep source documents immutable once referenced by an adjudication audit record.
+    if db.query(models.EvidenceReview).filter_by(document_id=did).first():
+        raise HTTPException(409, "Document has evidence-review history and cannot be deleted")
     db.query(models.Observation).filter_by(document_id=did).delete()
     path = d.stored_path
     db.delete(d)
     db.commit()
-    Path(path).unlink(missing_ok=True)
+    try:
+        delete_file(path)
+    except Exception:
+        # Database deletion succeeded; surface storage cleanup failure to the operator.
+        raise HTTPException(503, "Record deleted, but file cleanup needs administrator attention")
     return {"deleted": did}

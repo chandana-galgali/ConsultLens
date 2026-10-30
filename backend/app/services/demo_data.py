@@ -520,6 +520,12 @@ def create_demo_patients(db) -> list:
             from datetime import date as _date2
             doc_date = _date2.fromisoformat(doc_data["doc_date"]) if doc_data.get("doc_date") else None
             process_document(db, doc, user_date=doc_date, text_override=text)
+            # Preserve original synthetic source when remote storage is configured.
+            from .storage import store_processed_file
+            from ..config import settings
+            if settings.s3_bucket:
+                doc.stored_path = store_processed_file(tmp_path)
+                os.unlink(tmp_path)
 
         db.commit()
         db.refresh(pt)

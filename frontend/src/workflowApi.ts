@@ -34,3 +34,18 @@ export const updateCommunication = (pid:number, phone:string, preferred_language
 
 export const createStaff = (email:string,password:string,role:Staff["role"]) =>
   request<Staff>("/auth/staff", "POST", {email,password,role});
+
+export interface EvidenceReview { id:number; patient_id:number; target_type:"observation"|"checklist"; target_id:string; decision:string; reason:string; reviewer:string; document_id:number|null; created_at:string; before:Record<string,unknown>|null; after:Record<string,unknown>|null; }
+export interface ReviewObservation {id:number;label:string;code:string;value_num:number|null;value_text:string|null;unit:string|null; observed_on:string|null;snippet:string|null;document_id:number|null;filename:string|null;verified:boolean;review:EvidenceReview|null;}
+export interface ReviewChecklist {id:string;label:string;status:string;review:EvidenceReview|null;}
+export interface ReviewQueue {observations:ReviewObservation[];checklist:ReviewChecklist[];history:EvidenceReview[];disclaimer:string;}
+export type ReviewDecision = "verified"|"corrected"|"unavailable"|"clarification"|"reviewed";
+export const getReviewQueue = (pid:number) => request<ReviewQueue>(`/reviews/patients/${pid}`,"GET");
+export const submitReview = (pid:number, body:{target_type:"observation"|"checklist";target_id:string;decision:ReviewDecision;reason:string;corrected_value_num?:number;corrected_value_text?:string;}) => request<EvidenceReview>(`/reviews/patients/${pid}`,"POST",body);
+
+export async function transcribeAudio(file:File,language:string,syntheticConsent:boolean):Promise<{transcript:string;language:string;status:string}>{
+  const form=new FormData();form.append("file",file);form.append("language",language);form.append("synthetic_consent",String(syntheticConsent));
+  const response=await fetch(`${base}/workflow/transcribe`,{method:"POST",headers:{Authorization:`Bearer ${token}`},body:form});
+  if(!response.ok){const data=await response.json().catch(()=>null) as {detail?:string}|null;throw new Error(data?.detail||`Transcription failed (${response.status})`);}
+  return response.json() as Promise<{transcript:string;language:string;status:string}>;
+}

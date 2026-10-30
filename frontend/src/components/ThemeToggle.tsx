@@ -19,6 +19,6 @@ export function ThemeToggle() {
     title={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
     onClick={() => setTheme(t => t === "light" ? "dark" : "light")}>
     <span aria-hidden="true">{theme === "light" ? "☾" : "☀"}</span>
-    <span>{theme === "light" ? "Dark mode" : "Light mode"}</span>
+    <span className="sr-only">{theme === "light" ? "Dark mode" : "Light mode"}</span>
   </button>;
 }

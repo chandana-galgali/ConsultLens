@@ -5,12 +5,17 @@ Provider remains mock unless a real integration has been independently configure
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from .. import models
 from ..db import get_db
+from ..config import settings
+import httpx
+import logging
+
+logger = logging.getLogger(__name__)
 from ..security import current_user, require_roles
 
 router = APIRouter(prefix="/workflow", tags=["workflow"])
@@ -83,3 +88,44 @@ def reminders(pid: int, db: Session = Depends(get_db), user: models.StaffUser = 
     patient_or_404(db, pid)
     return [{"id": r.id, "scheduled_for": r.scheduled_for, "language": r.language, "status": r.status, "body": r.body}
             for r in db.query(models.Reminder).filter_by(patient_id=pid).order_by(models.Reminder.id.desc()).all()]
+
+
+@router.post("/transcribe")
+async def transcribe_demo_audio(
+    file: UploadFile = File(...),
+    language: str = Form("en"),
+    synthetic_consent: bool = Form(False),
+    _user: models.StaffUser = Depends(require_roles("doctor", "nurse")),
+):
+    """Explicit synthetic-only demo transcription; never persists raw audio or auto-approves notes."""
+    if not synthetic_consent:
+        raise HTTPException(422, "Confirm that this recording contains synthetic, consented demonstration content")
+    if language not in LANGS:
+        raise HTTPException(422, "Unsupported transcription language")
+    if not settings.openai_api_key:
+        raise HTTPException(503, "Audio AI transcription is not configured. Use browser dictation or typed notes")
+    suffix = (file.filename or "").lower().rsplit(".", 1)[-1]
+    if suffix not in {"wav", "mp3", "mp4", "m4a", "webm", "ogg"}:
+        raise HTTPException(422, "Upload a WAV, MP3, MP4, M4A, WebM or OGG recording")
+    max_bytes = 12 * 1024 * 1024
+    audio = await file.read(max_bytes + 1)
+    if len(audio) > max_bytes:
+        raise HTTPException(413, "Audio is too large (12 MB limit)")
+    if not audio:
+        raise HTTPException(422, "Audio recording is empty")
+    try:
+        async with httpx.AsyncClient(timeout=70) as client:
+            response = await client.post(
+                "https://api.openai.com/v1/audio/transcriptions",
+                headers={"Authorization": f"Bearer {settings.openai_api_key}"},
+                data={"model": settings.audio_transcription_model, "language": language},
+                files={"file": (file.filename or f"demo.{suffix}", audio, file.content_type or "application/octet-stream")},
+            )
+            response.raise_for_status()
+            text = response.json().get("text", "")
+            if not isinstance(text, str) or not text.strip():
+                raise ValueError("Empty transcription")
+            return {"transcript": text, "language": language, "status": "draft_requires_human_review"}
+    except (httpx.HTTPError, ValueError, KeyError):
+        logger.exception("demo_audio_transcription_failed")
+        raise HTTPException(502, "Transcription provider unavailable or returned an invalid response") from None
